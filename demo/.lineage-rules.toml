@@ -1,0 +1,6 @@
+[[rules]]
+name = "pii-isolation"
+type = "column-deny"
+columns = ["email", "phone", "id_number"]
+denied_schemas = ["reports", "analysis", "exports"]
+message = "PII 欄位不應出現在此 schema"

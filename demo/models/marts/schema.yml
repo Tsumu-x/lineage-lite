@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: mart_orders
+    description: "訂單寬表 — BI team 主要報表來源"
+    meta:
+      owner: data-platform
+      sla: daily
+      contains_pii: true
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: email
+        meta:
+          pii: true
+
+  - name: mart_customers
+    description: "客戶 360 度視圖"
+    meta:
+      owner: growth-team
+      sla: daily
+      contains_pii: true
+    columns:
+      - name: user_id
+        tests: [unique, not_null]
+      - name: email
+        meta:
+          pii: true
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              values: ['vip', 'regular', 'casual', 'prospect']
+
+  - name: mart_subscriptions
+    description: "訂閱分析表"
+    meta:
+      owner: subscription-team
+    columns:
+      - name: subscription_id
+        tests: [unique, not_null]
+
+  - name: mart_revenue
+    description: "營收彙總表（訂單 + 訂閱）"
+    meta:
+      owner: finance-team
+      sla: daily
+      certified: true
+    columns:
+      - name: revenue_month
+        tests: [not_null]

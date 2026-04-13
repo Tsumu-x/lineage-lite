@@ -1,0 +1,68 @@
+version: 2
+
+sources:
+  - name: raw
+    database: XYZmart_prod
+    schema: raw
+    description: "由後端系統與第三方 connector 寫入的原始資料"
+    loader: fivetran
+    loaded_at_field: _fivetran_synced
+
+    freshness:
+      warn_after: { count: 12, period: hour }
+      error_after: { count: 24, period: hour }
+
+    tables:
+      - name: orders
+        description: "電商訂單主表，每筆訂單一行"
+        columns:
+          - name: id
+            description: "訂單 PK"
+            tests:
+              - unique
+              - not_null
+          - name: user_id
+            tests: [not_null]
+          - name: status
+            tests:
+              - accepted_values:
+                  values: ['pending', 'completed', 'returned', 'cancelled']
+
+      - name: payments
+        description: >
+          付款資料。注意：card_brand + card_type 即將在 Q3 合併為
+          payment_method，請參考 RFC-2024-017。
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: order_id
+            tests: [not_null]
+          - name: card_brand
+            description: "即將 deprecated，改用 payment_method"
+          - name: card_type
+            description: "即將 deprecated，改用 payment_method"
+
+      - name: users
+        description: "使用者主表，含 PII 欄位（email, phone, id_number）"
+        meta:
+          owner: identity-team
+          contains_pii: true
+          pii_columns: ['email', 'phone', 'id_number']
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: email
+            tests: [unique, not_null]
+
+      - name: subscriptions
+        description: "訂閱服務資料"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+
+      - name: events
+        description: "使用者行為事件 log（clickstream）"
+        loaded_at_field: event_timestamp
+        freshness:
+          warn_after: { count: 1, period: hour }
+          error_after: { count: 6, period: hour }

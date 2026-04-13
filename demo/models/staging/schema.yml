@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: "清洗後的訂單資料，過濾已刪除和測試訂單"
+    columns:
+      - name: order_id
+        description: "訂單 PK"
+        tests: [unique, not_null]
+      - name: user_id
+        tests: [not_null]
+      - name: order_status
+        tests:
+          - accepted_values:
+              values: ['pending', 'completed', 'returned', 'cancelled']
+
+  - name: stg_payments
+    description: >
+      清洗後的付款資料。card_brand + card_type 已合併為 payment_method。
+      參考 RFC-2024-017。
+    columns:
+      - name: payment_id
+        tests: [unique, not_null]
+      - name: order_id
+        tests: [not_null]
+      - name: payment_amount
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+  - name: stg_users
+    description: "清洗後的使用者資料（含 PII）"
+    meta:
+      contains_pii: true
+    columns:
+      - name: user_id
+        tests: [unique, not_null]
+      - name: email
+        tests: [unique, not_null]
+        meta:
+          pii: true
+
+  - name: stg_subscriptions
+    description: "清洗後的訂閱資料"
+    columns:
+      - name: subscription_id
+        tests: [unique, not_null]
